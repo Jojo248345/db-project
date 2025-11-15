@@ -32,7 +32,17 @@ def db_read(sql, params=None, single=False):
     try:
         cur = conn.cursor(dictionary=True)
         cur.execute(sql, params or ())
-        return cur.fetchone() if single else cur.fetchall()
+
+        if single:
+            row = cur.fetchone()
+            return row
+        else:
+            rows = cur.fetchall()
+            return rows
+
     finally:
-        cur.close()
+        try:
+            cur.close()
+        except:
+            pass
         conn.close()
