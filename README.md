@@ -23,7 +23,7 @@ Diese Anleitung beschreibt den kompletten Ablauf, um das Projekt auszuführen un
 3.  Das neue Repo heisst z.B. username/db-project
 
 ### 1.2 Teammitglieder einladen
-Im geforkte Repo:
+Im geforkten Repo:
 1.  Settings
 2.  Collaborators
 3.  Add people
