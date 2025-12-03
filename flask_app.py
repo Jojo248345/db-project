@@ -138,5 +138,8 @@ def users():
 pass
 @app.route("/users", methods=["GET"])
 @login_required
-def users(): users = db_read("SELECT username FROM users ORDER BY username", ())
-return render_template("users.html", users=users)
+def users():
+    users = db_read("SELECT username FROM users ORDER BY username", ())
+    return render_template("users.html", users=users)
+
+
