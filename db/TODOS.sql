@@ -1,13 +1,9 @@
-CREATE TABLE users (
+CREATE TABLE Kunden (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    username VARCHAR(250) NOT NULL UNIQUE,
-    password VARCHAR(250) NOT NULL
+    Kunden_password VARCHAR(15) NOT NULL,
+    Kunden_Adresse VARCHAR(50) NOT NULL,
+    Kunden_Name VARCHAR(30) NOT NULL,
+    Kunden_Vorname VARCHAR(30) NOT NULL,
+    Kunden_Benutzername VARCHAR(15) NOT NULL
 );
 
-CREATE TABLE todos (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    content VARCHAR(100),
-    due DATETIME,
-    FOREIGN KEY (user_id) REFERENCES users(id)
-);
