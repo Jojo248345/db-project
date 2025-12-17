@@ -17,15 +17,17 @@ CREATE TABLE MitarbeiterInnen (
 CREATE TABLE Drohnen (
     Drohnen_id INT AUTO_INCREMENT PRIMARY KEY,
     Drohnen_Name VARCHAR(20) NOT NULL,
-    Drohnen_Geschwindigkeit_km/h INT NOT NULL,
-    Drohnen_beschäftigt Boolean NOT NULL
+    Drohnen_Geschwindigkeit_kmh INT NOT NULL,
+    Drohnen_Preis_CHF FLOAT NOT NULL,
+    Drohnen_beschaeftigt BOOLEAN NOT NULL
 );
 
 CREATE TABLE Produkte (
     Produkt_id INT AUTO_INCREMENT PRIMARY KEY,
-    Produkt_Name VARCHAR(30),
-    Produkt_Preis_CHF Float NOT NULL,
-    Foreign Key (Rezept_id) REFERENCES Rezept_id
+    Produkt_Name VARCHAR(30) NOT NULL,
+    Produkt_Preis_CHF FLOAT NOT NULL,
+    Rezept_id INT,
+    FOREIGN KEY (Rezept_id) REFERENCES Rezept(Rezept_id)
 );
 
 CREATE TABLE Rezept (
@@ -41,11 +43,18 @@ CREATE TABLE Rezept (
 );
  CREATE TABLE Bestellung (
     Bestellung_id INT AUTO_INCREMENT PRIMARY KEY,
-    Foreign KEY (Produkt_id) REFERENCES Produkt_id,
-    FOREIGN KEY (Kunden_id) REFERENCES Kunden_id
- )
+    Kunden_id INT NOT NULL,
+    Drohnen_id INT NOT NULL,
+    Bestell_Datum DATETIME,
+    Gesamtpreis_CHF FLOAT,
+    Status VARCHAR(20),
+    FOREIGN KEY (Kunden_id) REFERENCES Kunden(Kunden_id),
+    FOREIGN KEY (Drohnen_id) REFERENCES Drohnen(Drohnen_id)
+);
 
- CREATE TABLE Website (
+ 
+
+ "CREATE TABLE Website (
     Website_URL INT AUTO_INCREMENT PRIMARY KEY,
     Website_Werbung VARCHAR(200)
- );
+ );"
