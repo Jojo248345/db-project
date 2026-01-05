@@ -108,30 +108,29 @@ def logout():
 @app.route("/test")
 def test():
     return "Flask läuft!"
-from flask import Flask, render_template, request, redirect
-from db import db_read, db_write
 
-app = Flask(__name__)
+
 
 @app.route("/produkt-neu", methods=["GET", "POST"])
 def produkt_neu():
 
     # GET → Formular anzeigen
     if request.method == "GET":
-        zutaten = db_read("SELECT * FROM Zutaten")
-        return render_template("produkt_neu.html", zutaten=zutaten)
+        rezepte = db_read("SELECT * FROM Rezept")
+        return render_template("produkt_neu.html", rezepte=rezepte)
 
     # POST → Produkt speichern
     name = request.form["name"]
     preis = request.form["preis"]
-    zutaten_id = request.form["zutaten_id"]
+    rezept_id = request.form["rezept_id"]
 
     db_write(
-        "INSERT INTO Produkte (Produkt_Name, Produkt_Preis_CHF, Zutaten_id) VALUES (%s, %s, %s)",
-        (name, preis, zutaten_id)
+        "INSERT INTO Produkte (Produkt_Name, Produkt_Preis_CHF, Rezept_id) VALUES (%s, %s, %s)",
+        (name, preis, rezept_id)
     )
 
-    return "✅ Produkt wurde gespeichert!"
+    return "✅ Produkt wurde erfolgreich gespeichert!"
+
 
 
 
