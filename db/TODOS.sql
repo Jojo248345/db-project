@@ -32,14 +32,14 @@ CREATE TABLE Produkte (
 
 CREATE TABLE Rezept (
     Rezept_id INT AUTO_INCREMENT PRIMARY KEY,
-    Mehl_g Float NOT NULL,
-    Wasser_ml Float NOT NULL,
-    Butter_g Float NOT NULL,
-    Milch_ml Float NOT NULL,
-    Eier_stk Float NOT NULL,
-    Zucker_g Float NOT NULL,
-    Salz_g Float NOT NULL,
-    Schokolade_g Float NOT NULL,
+    Mehl_g FLOAT NOT NULL,
+    Wasser_ml FLOAT NOT NULL,
+    Butter_g FLOAT NOT NULL,
+    Milch_ml FLOAT NOT NULL,
+    Eier_stk FLOAT NOT NULL,
+    Zucker_g FLOAT NOT NULL,
+    Salz_g FLOAT NOT NULL,
+    Schokolade_g FLOAT NOT NULL
 );
  CREATE TABLE Bestellung (
     Bestellung_id INT AUTO_INCREMENT PRIMARY KEY,
