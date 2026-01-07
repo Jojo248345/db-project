@@ -1,4 +1,4 @@
-import logging
+'''import logging
 from flask_login import LoginManager, UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from db import db_read, db_write
@@ -110,4 +110,65 @@ def authenticate(username, password):
         return user
 
     logger.warning("authenticate(): falsches Passwort für '%s'", username)
+    return None'''
+    from flask_login import LoginManager, UserMixin
+from db import db_read, db_write
+
+login_manager = LoginManager()
+
+# Die Benutzer-Klasse
+# Sie speichert temporär, wer gerade eingeloggt ist (Kunde oder Mitarbeiter)
+class User(UserMixin):
+    def __init__(self, id, role, name):
+        self.id = id      # Die ID, z.B. "K-1" oder "M-2"
+        self.role = role  # "kunde" oder "mitarbeiter"
+        self.name = name
+
+# Flask ruft diese Funktion bei JEDEM Seitenaufruf auf
+# Sie lädt den User anhand der ID aus der Datenbank nach
+@login_manager.user_loader
+def load_user(user_id):
+    parts = user_id.split('-') # Teilt "K-1" in ["K", "1"]
+    typ = parts[0]
+    db_id = parts[1]
+    
+    if typ == 'K': # Kunde
+        res = db_read("SELECT * FROM Kunden WHERE Kunden_id = %s", (db_id,))
+        if res: return User(user_id, 'kunde', res[0]['Kunden_Benutzername'])
+        
+    elif typ == 'M': # Mitarbeiter
+        res = db_read("SELECT * FROM MitarbeiterInnen WHERE MitarbeiterInnen_id = %s", (db_id,))
+        if res: return User(user_id, 'mitarbeiter', res[0]['MitarbeiterInnen_Name'])
+        
     return None
+
+# Diese Funktion wird NUR beim Klick auf "Login" aufgerufen
+# Sie prüft Benutzername und Passwort
+def authenticate(username, password, role):
+    if role == 'kunde':
+        # Prüfen ob Name UND Passwort stimmen
+        res = db_read("SELECT * FROM Kunden WHERE Kunden_Benutzername = %s AND Kunden_password = %s", (username, password))
+        if res: 
+            return User(f"K-{res[0]['Kunden_id']}", 'kunde', res[0]['Kunden_Benutzername'])
+    
+    elif role == 'mitarbeiter':
+        # Nur Name prüfen (Mitarbeiter haben kein Passwort in deiner Tabelle)
+        # WICHTIG: Hier muss der Spaltenname stimmen!
+        res = db_read("SELECT * FROM MitarbeiterInnen WHERE MitarbeiterInnen_Name = %s", (username,))
+        if res: 
+            return User(f"M-{res[0]['MitarbeiterInnen_id']}", 'mitarbeiter', res[0]['MitarbeiterInnen_Name'])
+            
+    return None
+
+# Diese Funktion wird beim Registrieren aufgerufen
+def register_user(username, password, name, adresse):
+    # Gibt es den Namen schon?
+    exists = db_read("SELECT * FROM Kunden WHERE Kunden_Benutzername = %s", (username,))
+    if exists: return False
+    
+    # Speichern
+    db_write(
+        "INSERT INTO Kunden (Kunden_Benutzername, Kunden_password, Kunden_Name, Kunden_Vorname, Kunden_Adresse) VALUES (%s, %s, %s, 'Neu', %s)", 
+        (username, password, name, adresse)
+    )
+    return True
