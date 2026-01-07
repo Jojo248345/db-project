@@ -100,7 +100,7 @@ def register():
         footer_link_label="Einloggen"
     )
 
-'''@app.route("/logout")
+@app.route("/logout")
 @login_required
 def logout():
     logout_user()
