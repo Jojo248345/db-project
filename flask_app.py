@@ -138,7 +138,6 @@ def produkt_neu():
 
 # 1️⃣ Produkte anzeigen
 @app.route("/produkte")
-@login_required
 def produkte():
     produkte = db_read("SELECT * FROM Produkte")
     return render_template("produkte.html", produkte=produkte)
@@ -146,7 +145,7 @@ def produkte():
 
 # 2️⃣ Produkt in Warenkorb
 @app.post("/warenkorb/add")
-@login_required
+
 def warenkorb_add():
     produkt_id = request.form["produkt_id"]
 
@@ -159,7 +158,7 @@ def warenkorb_add():
 
 # 3️⃣ Drohne auswählen
 @app.route("/drohne", methods=["GET", "POST"])
-@login_required
+
 def drohne():
     if request.method == "GET":
         drohnen = db_read("SELECT * FROM Drohnen WHERE Drohnen_beschaeftigt = 0")
@@ -171,7 +170,6 @@ def drohne():
 
 # 4️⃣ Bezahlen (SIMULIERT)
 @app.route("/bezahlen", methods=["GET", "POST"])
-@login_required
 def bezahlen():
     if request.method == "GET":
         return render_template("bezahlen.html")
