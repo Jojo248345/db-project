@@ -1,40 +1,23 @@
 
 <h1>Neues Produkt erfassen</h1>
 
-{% if success %}
-<p style="color: green;">✔ Produkt erfolgreich gespeichert</p>
-{% endif %}
-
 <form method="post">
-    <input name="name" placeholder="Produktname" required><br><br>
-    <input name="preis" type="number" step="0.05" placeholder="Preis CHF" required><br><br>
 
-    <select name="rezept_id" required>
+    <label>Produktname:</label><br>
+    <input type="text" name="name" required><br><br>
+
+    <label>Preis (CHF):</label><br>
+    <input type="number" step="0.05" name="preis" required><br><br>
+
+    <label>Rezept auswählen:</label><br>
+    <select name="rezept_id">
         {% for r in rezepte %}
-        <option value="{{ r.Rezept_id }}">Rezept {{ r.Rezept_id }}</option>
+            <option value="{{ r.Rezept_id }}">
+                Rezept {{ r.Rezept_id }}
+            </option>
         {% endfor %}
     </select><br><br>
 
-    <button>Speichern</button>
+    <button type="submit">Produkt speichern</button>
+
 </form>
-
-<hr>
-
-<h2>Bereits gespeicherte Produkte</h2>
-
-<table border="1">
-<tr>
-    <th>Name</th>
-    <th>Preis</th>
-    <th>Rezept</th>
-</tr>
-
-{% for p in produkte %}
-<tr>
-    <td>{{ p.Produkt_Name }}</td>
-    <td>{{ p.Produkt_Preis_CHF }}</td>
-    <td>{{ p.Rezept_id }}</td>
-</tr>
-{% endfor %}
-</table>
-
