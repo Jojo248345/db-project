@@ -47,7 +47,7 @@ def webhook():
     return 'Unathorized', 401
 
 # Auth routes
-@app.route("/login", methods=["GET", "POST"])
+'''@app.route("/login", methods=["GET", "POST"])
 def login():
     error = None
 
@@ -108,7 +108,7 @@ def logout():
 
 
 
-'''@app.route("/produkt-neu", methods=["GET", "POST"])
+@app.route("/produkt-neu", methods=["GET", "POST"])
 def produkt_neu():
 
     # GET → Formular anzeigen
@@ -189,7 +189,49 @@ def index():
 
 # --- LOGIN & REGISTER (Zeigt 'templates/auth.html') ---
 
+@app.route("/")
+def index():
+    return render_template("index.html")
 
+# --- LOGIN & REGISTER ---
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    error = None
+    if request.method == "POST":
+        user = authenticate(
+            request.form["username"], 
+            request.form["password"], 
+            request.form.get("role", "kunde")
+        )
+        if user:
+            login_user(user)
+            return redirect(url_for("index"))
+        error = "Falscher Name oder Passwort!"
+
+    return render_template("auth.html", title="Login", action="/login", button_label="Anmelden", error=error, is_register=False)
+
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    error = None
+    if request.method == "POST":
+        ok = register_user(
+            request.form["username"], 
+            request.form["password"], 
+            request.form["name"], 
+            request.form["adresse"]
+        )
+        if ok:
+            return redirect(url_for("login"))
+        error = "Name schon vergeben!"
+
+    return render_template("auth.html", title="Registrieren", action="/register", button_label="Erstellen", error=error, is_register=True)
+
+@app.route("/logout")
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for("index"))
 
 
 # --- MITARBEITER (Zeigt 'produkt_neu.html' & 'drohne_neu.html') ---
