@@ -401,26 +401,41 @@ def produkt_neu():
     )
     return "✅ Produkt erfolgreich mit Rezept gespeichert! <a href='/'>Zurück</a>"
 
-@app.route("/drohne-neu", methods=["GET", "POST"])
-@login_required
-def drohne_neu():
-    if current_user.role != 'mitarbeiter': return "Verboten!"
-    
-    if request.method == "POST":
-        db_write(
-            "INSERT INTO Drohnen (Drohnen_Name, Drohnen_Geschwindigkeit_kmh, Drohnen_Preis_CHF, Drohnen_beschaeftigt) VALUES (%s, %s, %s, 0)",
-            (request.form["name"], request.form["speed"], request.form["preis"])
-        )
-        return "✅ Drohne gespeichert! <a href='/'>Zurück</a>"
-    
-    return render_template("drohne_neu.html")
-
 @app.route("/produkt-loeschen/<int:id>")
 @login_required
 def produkt_loeschen(id):
     if current_user.role != 'mitarbeiter': return "Verboten!"
     db_write("DELETE FROM Produkte WHERE Produkt_id = %s", (id,))
     return redirect("/produkte")
+
+
+# --- DROHNEN VERWALTUNG (NEU) ---
+
+@app.route("/drohne-neu", methods=["GET", "POST"])
+@login_required
+def drohne_neu():
+    if current_user.role != 'mitarbeiter': return "Verboten!"
+    
+    # Wenn Formular gesendet (POST) -> Speichern
+    if request.method == "POST":
+        db_write(
+            "INSERT INTO Drohnen (Drohnen_Name, Drohnen_Geschwindigkeit_kmh, Drohnen_Preis_CHF, Drohnen_beschaeftigt) VALUES (%s, %s, %s, 0)",
+            (request.form["name"], request.form["speed"], request.form["preis"])
+        )
+        return redirect(url_for('drohne_neu')) # Seite neu laden damit die neue Drohne erscheint
+    
+    # Immer (GET): Liste aller Drohnen laden und anzeigen
+    drohnen_liste = db_read("SELECT * FROM Drohnen")
+    return render_template("drohne_neu.html", drohnen=drohnen_liste)
+
+@app.route("/drohne-loeschen/<int:id>")
+@login_required
+def drohne_loeschen(id):
+    if current_user.role != 'mitarbeiter': return "Verboten!"
+    
+    # Drohne löschen
+    db_write("DELETE FROM Drohnen WHERE Drohnen_id = %s", (id,))
+    return redirect(url_for('drohne_neu'))
 
 
 # --- KUNDEN ---
