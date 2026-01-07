@@ -108,7 +108,7 @@ def logout():
 
 
 
-@app.route("/produkt-neu", methods=["GET", "POST"])
+'''@app.route("/produkt-neu", methods=["GET", "POST"])
 def produkt_neu():
 
     # GET → Formular anzeigen
