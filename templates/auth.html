@@ -1,76 +1,67 @@
 {% extends "base.html" %}
 
 {% block content %}
-<style>
-  .auth-wrapper {
-    max-width: 400px;
-    margin: 50px auto;
-  }
-  .auth-card {
-    background: #ffffff;
-    padding: 30px 30px 25px;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
-  }
-  .auth-title {
-    font-size: 26px;
-    font-weight: 600;
-    margin-top: 0;
-    margin-bottom: 20px;
-  }
-  .error { color: red; margin-bottom: 15px; }
-  .auth-footer-text {
-    font-size: 13px;
-    margin-top: 15px;
-    text-align: center;
-  }
-  .auth-footer-text a { font-weight: 600; }
-</style>
+<div class="row justify-content-center">
+    <div class="col-md-5">
+        <div class="card p-4 shadow-sm">
+            <h2 class="text-center mb-4">{{ title }}</h2>
+            
+            {% if error %}
+                <div class="alert alert-danger">{{ error }}</div>
+            {% endif %}
 
-<div class="auth-wrapper">
-  <div class="auth-card">
+            <form action="{{ action }}" method="POST">
+                <div class="mb-3">
+                    <label class="form-label">Benutzername</label>
+                    <input type="text" name="username" class="form-control" required>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Passwort</label>
+                    <!-- Hinweis für Mitarbeiter -->
+                    <input type="password" name="password" class="form-control" placeholder="(Leer lassen für Mitarbeiter)">
+                </div>
 
-    <h1 class="auth-title">{{ title }}</h1>
+                <!-- WICHTIG: Das Dropdown-Menü -->
+                {% if not is_register %}
+                    <div class="mb-3 p-3 bg-light border rounded">
+                        <label class="form-label fw-bold">Ich bin ein:</label>
+                        <select name="role" class="form-select">
+                            <option value="kunde" selected>👤 Kunde</option>
+                            <option value="mitarbeiter">👨‍🍳 Mitarbeiter</option>
+                        </select>
+                    </div>
+                {% endif %}
 
-    {% if error %}
-      <p class="error">{{ error }}</p>
-    {% endif %}
+                {% if is_register %}
+                    <div class="mb-3">
+                        <label class="form-label">Name</label>
+                        <input type="text" name="name" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Adresse</label>
+                        <input type="text" name="adresse" class="form-control">
+                    </div>
+                    <!-- Bei Registrierung sind wir automatisch Kunde, daher kein Dropdown nötig -->
+                {% endif %}
 
-    <form action="{{ action }}" method="post">
-      <div class="form-group">
-        <label for="username">Benutzername</label>
-        <input
-          type="text"
-          class="form-control"
-          name="username"
-          placeholder="Benutzername"
-          required
-        >
-      </div>
+                <div class="d-grid gap-2 mt-4">
+                    <button type="submit" class="btn btn-primary btn-lg">{{ button_label }}</button>
+                </div>
+            </form>
 
-      <div class="form-group">
-        <label for="password">Passwort</label>
-        <input
-          type="password"
-          class="form-control"
-          name="password"
-          placeholder="Passwort"
-          required
-        >
-      </div>
-
-      <button type="submit" class="btn btn-primary btn-block">
-        {{ button_label }}
-      </button>
-    </form>
-
-    {% if footer_text %}
-      <p class="auth-footer-text">
-        {{ footer_text }}
-        <a href="{{ footer_link_url }}">{{ footer_link_label }}</a>
-      </p>
-    {% endif %}
-
-  </div>
+            <hr class="my-4">
+            
+            <div class="text-center">
+                {% if is_register %}
+                    <p>Hast du schon ein Konto?</p>
+                    <a href="/login" class="text-decoration-none">Hier Einloggen</a>
+                {% else %}
+                    <p>Noch kein Konto?</p>
+                    <a href="/register" class="text-decoration-none">Hier als Kunde registrieren</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
