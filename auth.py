@@ -143,7 +143,12 @@ def load_user(user_id):
     db_id = parts[1]
     
     if typ == 'K': # Kunde
+        # Wir versuchen es erst mit Kunden_id, falls das fehlschlägt, ist die Tabelle evtl. anders benannt
+        # Da wir hier SQL schreiben müssen, nutzen wir Kunden_id als Standard
+        # Falls du hier Fehler bekommst, müssen wir prüfen ob die Spalte 'id' heißt
         res = db_read("SELECT * FROM Kunden WHERE Kunden_id = %s", (db_id,))
+        # Fallback falls die Query leer ist, könnte man hier eine zweite Query mit 'id' versuchen, 
+        # aber meistens liegt der Fehler beim Login (unten).
         if res: return User(user_id, 'kunde', res[0]['Kunden_Benutzername'])
         
     elif typ == 'M': # Mitarbeiter
@@ -159,14 +164,22 @@ def authenticate(username, password, role):
         # Prüfen ob Name UND Passwort stimmen
         res = db_read("SELECT * FROM Kunden WHERE Kunden_Benutzername = %s AND Kunden_password = %s", (username, password))
         if res: 
-            return User(f"K-{res[0]['Kunden_id']}", 'kunde', res[0]['Kunden_Benutzername'])
+            # Robuste ID-Suche: Falls 'Kunden_id' fehlt, probieren wir 'id' oder 'kunden_id'
+            user_row = res[0]
+            k_id = user_row.get('Kunden_id') or user_row.get('id') or user_row.get('kunden_id')
+            
+            return User(f"K-{k_id}", 'kunde', user_row['Kunden_Benutzername'])
     
     elif role == 'mitarbeiter':
         # Nur Name prüfen (Mitarbeiter haben kein Passwort in deiner Tabelle)
         # WICHTIG: Hier muss der Spaltenname stimmen!
         res = db_read("SELECT * FROM MitarbeiterInnen WHERE MitarbeiterInnen_Name = %s", (username,))
         if res: 
-            return User(f"M-{res[0]['MitarbeiterInnen_id']}", 'mitarbeiter', res[0]['MitarbeiterInnen_Name'])
+            user_row = res[0]
+            # Auch hier robust sein
+            m_id = user_row.get('MitarbeiterInnen_id') or user_row.get('id') or user_row.get('mitarbeiterinnen_id')
+            
+            return User(f"M-{m_id}", 'mitarbeiter', user_row['MitarbeiterInnen_Name'])
             
     return None
 
