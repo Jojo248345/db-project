@@ -183,7 +183,7 @@ def bezahlen():
     session.pop("warenkorb", None)
     return "✅ Bestellung abgeschlossen!" '''
 
-    @app.route("/")
+@app.route("/")
 def index():
     return render_template("index.html")
 
