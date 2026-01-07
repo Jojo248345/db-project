@@ -111,6 +111,7 @@ def authenticate(username, password):
 
     logger.warning("authenticate(): falsches Passwort für '%s'", username)
     return None'''
+
 from flask_login import LoginManager, UserMixin
 from db import db_read, db_write
 
