@@ -193,7 +193,7 @@ def index():
 
 # --- LOGIN & REGISTER ---
 
-@app.route("/login", methods=["GET", "POST"])
+'''@app.route("/login", methods=["GET", "POST"])
 def login():
     error = None
     if request.method == "POST":
@@ -325,6 +325,146 @@ def bezahlen():
     return "✅ Bestellt! <a href='/'>Home</a>"
 
 if __name__ == "__main__":
+    app.run()'''
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    error = None
+    if request.method == "POST":
+        user = authenticate(
+            request.form["username"], 
+            request.form["password"], 
+            request.form.get("role", "kunde")
+        )
+        if user:
+            login_user(user)
+            return redirect(url_for("index"))
+        error = "Falscher Name oder Passwort!"
+
+    return render_template("auth.html", title="Login", action="/login", button_label="Anmelden", error=error, is_register=False)
+
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    error = None
+    if request.method == "POST":
+        ok = register_user(
+            request.form["username"], 
+            request.form["password"], 
+            request.form["name"], 
+            request.form["adresse"]
+        )
+        if ok:
+            return redirect(url_for("login"))
+        error = "Name schon vergeben!"
+
+    return render_template("auth.html", title="Registrieren", action="/register", button_label="Erstellen", error=error, is_register=True)
+
+@app.route("/logout")
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for("index"))
+
+
+# --- MITARBEITER ---
+
+@app.route("/produkt-neu", methods=["GET", "POST"])
+@login_required
+def produkt_neu():
+    if current_user.role != 'mitarbeiter': return "Verboten!"
+
+    if request.method == "GET":
+        return render_template("produkt_neu.html")
+
+    # UPDATE: Hier lesen wir jetzt ALLE Zutaten aus dem Formular
+    # Wir nutzen 'or 0', damit leere Felder als 0 gespeichert werden und nicht crashen
+    mehl = request.form.get("mehl") or 0
+    wasser = request.form.get("wasser") or 0
+    butter = request.form.get("butter") or 0
+    milch = request.form.get("milch") or 0
+    eier = request.form.get("eier") or 0
+    zucker = request.form.get("zucker") or 0
+    salz = request.form.get("salz") or 0
+    schoko = request.form.get("schoko") or 0
+
+    # 1. Rezept speichern (mit allen Spalten)
+    sql_rezept = """
+        INSERT INTO Rezept (Mehl_g, Wasser_ml, Butter_g, Milch_ml, Eier_stk, Zucker_g, Salz_g, Schokolade_g) 
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+    """
+    rezept_id = db_write(sql_rezept, (mehl, wasser, butter, milch, eier, zucker, salz, schoko))
+
+    # 2. Produkt speichern
+    db_write(
+        "INSERT INTO Produkte (Produkt_Name, Produkt_Preis_CHF, Rezept_id) VALUES (%s, %s, %s)",
+        (request.form["name"], request.form["preis"], rezept_id)
+    )
+    return "✅ Produkt erfolgreich mit Rezept gespeichert! <a href='/'>Zurück</a>"
+
+@app.route("/drohne-neu", methods=["GET", "POST"])
+@login_required
+def drohne_neu():
+    if current_user.role != 'mitarbeiter': return "Verboten!"
+    
+    if request.method == "POST":
+        db_write(
+            "INSERT INTO Drohnen (Drohnen_Name, Drohnen_Geschwindigkeit_kmh, Drohnen_Preis_CHF, Drohnen_beschaeftigt) VALUES (%s, %s, %s, 0)",
+            (request.form["name"], request.form["speed"], request.form["preis"])
+        )
+        return "✅ Drohne gespeichert! <a href='/'>Zurück</a>"
+    
+    return render_template("drohne_neu.html")
+
+@app.route("/produkt-loeschen/<int:id>")
+@login_required
+def produkt_loeschen(id):
+    if current_user.role != 'mitarbeiter': return "Verboten!"
+    db_write("DELETE FROM Produkte WHERE Produkt_id = %s", (id,))
+    return redirect("/produkte")
+
+
+# --- KUNDEN ---
+
+@app.route("/produkte")
+def produkte():
+    daten = db_read("SELECT * FROM Produkte")
+    return render_template("produkte.html", produkte=daten)
+
+@app.route("/warenkorb", methods=["POST"])
+@login_required
+def warenkorb_add():
+    session["warenkorb_id"] = request.form["produkt_id"]
+    session["warenkorb_name"] = request.form["produkt_name"]
+    session["warenkorb_preis"] = float(request.form["produkt_preis"])
+    return redirect("/drohne")
+
+@app.route("/drohne", methods=["GET", "POST"])
+@login_required
+def drohne():
+    if request.method == "GET":
+        daten = db_read("SELECT * FROM Drohnen WHERE Drohnen_beschaeftigt = 0")
+        return render_template("drohne.html", drohnen=daten)
+
+    session["drohne_id"] = request.form["drohnen_id"]
+    session["drohne_preis"] = float(request.form["drohne_preis"])
+    return redirect("/bezahlen")
+
+@app.route("/bezahlen", methods=["GET", "POST"])
+@login_required
+def bezahlen():
+    total = session.get("warenkorb_preis", 0) + session.get("drohne_preis", 0)
+
+    if request.method == "GET":
+        return render_template("bezahlen.html", total=total)
+
+    kunden_id = current_user.id.split("-")[1]
+    db_write("INSERT INTO Bestellung (Kunden_id, Drohnen_id, Bestell_Datum, Gesamtpreis_CHF, Status) VALUES (%s, %s, NOW(), %s, 'Bezahlt')",
+             (kunden_id, session["drohne_id"], total))
+    
+    db_write("UPDATE Drohnen SET Drohnen_beschaeftigt = 1 WHERE Drohnen_id = %s", (session["drohne_id"],))
+    
+    session.pop("warenkorb_id", None)
+    return "✅ Bestellt! <a href='/'>Home</a>"
+
+if __name__ == "__main__":
     app.run()
-
-
