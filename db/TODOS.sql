@@ -56,4 +56,4 @@ CREATE TABLE Rezept (
 (Mehl_g, Wasser_ml, Butter_g, Milch_ml, Eier_stk, Zucker_g, Salz_g, Schokolade_g)
 VALUES (200, 100, 50, 50, 2, 30, 5, 20);
 INSERT INTO MitarbeiterInnen (MitarbeiterInnen_Name, MitarbeiterInnen_Vorname, MitarbeiterInnen_Aufgabe) 
-VALUES ('Joris', 'Misha', 'Malik');
+VALUES ('Joris', 'Struve','Chef');
