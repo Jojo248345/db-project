@@ -34,47 +34,52 @@
         <a href="/" class="btn btn-outline-secondary mb-3">&laquo; Zurück zur Startseite</a>
     </div>
 
-    <!-- RECHTER TEIL: BESTEHENDE DROHNEN LÖSCHEN -->
+    <!-- RECHTER TEIL: BESTEHENDE DROHNEN -->
     <div class="col-md-7">
         <div class="card shadow-sm">
             <div class="card-header bg-secondary text-white">
                 <h4 class="mb-0">📋 Aktuelle Flotte</h4>
             </div>
             <div class="card-body p-0">
-                <table class="table table-striped table-hover mb-0">
+                <table class="table table-striped table-hover mb-0 align-middle">
                     <thead class="table-light">
                         <tr>
                             <th>Modell</th>
-                            <th>Speed</th>
-                            <th>Preis</th>
+                            <th>Infos</th>
                             <th>Status</th>
-                            <th>Aktion</th>
+                            <th class="text-end">Aktion</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for d in drohnen %}
                         <tr>
                             <td class="fw-bold">{{ d.Drohnen_Name }}</td>
-                            <td>{{ d.Drohnen_Geschwindigkeit_kmh }} km/h</td>
-                            <td>{{ d.Drohnen_Preis_CHF }} CHF</td>
+                            <td>
+                                <small class="d-block">{{ d.Drohnen_Geschwindigkeit_kmh }} km/h</small>
+                                <small class="text-muted">{{ d.Drohnen_Preis_CHF }} CHF</small>
+                            </td>
                             <td>
                                 {% if d.Drohnen_beschaeftigt %}
-                                    <span class="badge bg-danger">Unterwegs</span>
+                                    <span class="badge bg-danger mb-1">Unterwegs</span>
+                                    <!-- Button um Drohne zurückzuholen -->
+                                    <a href="/drohne-reset/{{ d.Drohnen_id }}" class="btn btn-outline-success btn-sm d-block" style="font-size: 0.7rem;">
+                                        🔄 Rückkehr
+                                    </a>
                                 {% else %}
                                     <span class="badge bg-success">Frei</span>
                                 {% endif %}
                             </td>
-                            <td>
+                            <td class="text-end">
                                 <a href="/drohne-loeschen/{{ d.Drohnen_id }}" 
                                    class="btn btn-danger btn-sm"
                                    onclick="return confirm('Drohne wirklich verschrotten?')">
-                                   Löschen
+                                   🗑️
                                 </a>
                             </td>
                         </tr>
                         {% else %}
                         <tr>
-                            <td colspan="5" class="text-center py-3 text-muted">
+                            <td colspan="4" class="text-center py-3 text-muted">
                                 Noch keine Drohnen in der Flotte.
                             </td>
                         </tr>

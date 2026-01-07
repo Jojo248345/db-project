@@ -437,6 +437,15 @@ def drohne_loeschen(id):
     db_write("DELETE FROM Drohnen WHERE Drohnen_id = %s", (id,))
     return redirect(url_for('drohne_neu'))
 
+@app.route("/drohne-reset/<int:id>")
+@login_required
+def drohne_reset(id):
+    if current_user.role != 'mitarbeiter': return "Verboten!"
+    
+    # Setze 'Drohnen_beschaeftigt' auf 0 (False)
+    db_write("UPDATE Drohnen SET Drohnen_beschaeftigt = 0 WHERE Drohnen_id = %s", (id,))
+    return redirect(url_for('drohne_neu'))
+
 
 # --- KUNDEN ---
 
