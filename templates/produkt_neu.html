@@ -1,52 +1,39 @@
 
-
 <h1>Neues Produkt erfassen</h1>
 
-<!-- ✔ Erfolgsmeldung -->
 {% if success %}
-<p style="color: green;">✔ Produkt wurde gespeichert</p>
+<p style="color: green;">✔ Produkt erfolgreich gespeichert</p>
 {% endif %}
 
-<!-- Formular -->
 <form method="post">
-    <label>Produktname:</label><br>
-    <input type="text" name="name" required><br><br>
+    <input name="name" placeholder="Produktname" required><br><br>
+    <input name="preis" type="number" step="0.05" placeholder="Preis CHF" required><br><br>
 
-    <label>Preis (CHF):</label><br>
-    <input type="number" step="0.05" name="preis" required><br><br>
-
-    <label>Rezept:</label><br>
     <select name="rezept_id" required>
         {% for r in rezepte %}
-            <option value="{{ r.Rezept_id }}">
-                Rezept {{ r.Rezept_id }}
-            </option>
+        <option value="{{ r.Rezept_id }}">Rezept {{ r.Rezept_id }}</option>
         {% endfor %}
     </select><br><br>
 
-    <button type="submit">Produkt speichern</button>
+    <button>Speichern</button>
 </form>
 
 <hr>
 
-<!-- Tabelle mit gespeicherten Produkten -->
-<h2>Gespeicherte Produkte</h2>
+<h2>Bereits gespeicherte Produkte</h2>
 
-<table border="1" cellpadding="5">
-    <tr>
-        <th>Name</th>
-        <th>Preis (CHF)</th>
-        <th>Rezept</th>
-    </tr>
+<table border="1">
+<tr>
+    <th>Name</th>
+    <th>Preis</th>
+    <th>Rezept</th>
+</tr>
 
-    {% for p in produkte %}
-    <tr>
-        <td>{{ p.Produkt_Name }}</td>
-        <td>{{ p.Produkt_Preis_CHF }}</td>
-        <td>{{ p.Rezept_id }}</td>
-    </tr>
-    {% endfor %}
+{% for p in produkte %}
+<tr>
+    <td>{{ p.Produkt_Name }}</td>
+    <td>{{ p.Produkt_Preis_CHF }}</td>
+    <td>{{ p.Rezept_id }}</td>
+</tr>
+{% endfor %}
 </table>
-
-<br>
-<a href="/">Zurück zur Startseite</a>

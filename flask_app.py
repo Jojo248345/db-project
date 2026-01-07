@@ -127,40 +127,31 @@ def produkt_neu():
     )
 
     return "✅ Produkt wurde erfolgreich gespeichert!" '''
+
 @app.route("/produkt-neu", methods=["GET", "POST"])
 @login_required
 def produkt_neu():
     success = False
 
-    # Wenn Formular abgeschickt wurde
     if request.method == "POST":
-        name = request.form["name"]
-        preis = request.form["preis"]
-        rezept_id = request.form["rezept_id"]
-
         db_write(
             "INSERT INTO Produkte (Produkt_Name, Produkt_Preis_CHF, Rezept_id) VALUES (%s, %s, %s)",
-            (name, preis, rezept_id)
+            (
+                request.form["name"],
+                request.form["preis"],
+                request.form["rezept_id"]
+            )
         )
+        success = True
 
-        success = True  # <-- Häkchen anzeigen
-
-    # Rezepte für Dropdown
     rezepte = db_read("SELECT Rezept_id FROM Rezept")
-
-    # Gespeicherte Produkte für Tabelle
-    produkte = db_read("""
-        SELECT p.Produkt_Name, p.Produkt_Preis_CHF, r.Rezept_id
-        FROM Produkte p
-        LEFT JOIN Rezept r ON p.Rezept_id = r.Rezept_id
-        ORDER BY p.Produkt_id DESC
-    """)
+    produkte = db_read("SELECT Produkt_Name, Produkt_Preis_CHF, Rezept_id FROM Produkte")
 
     return render_template(
         "produkt_neu.html",
+        success=success,
         rezepte=rezepte,
-        produkte=produkte,
-        success=success
+        produkte=produkte
     )
 
 
