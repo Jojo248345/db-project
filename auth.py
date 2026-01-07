@@ -118,80 +118,93 @@ from db import db_read, db_write
 login_manager = LoginManager()
 
 # Die Benutzer-Klasse
-# Sie speichert temporär, wer gerade eingeloggt ist (Kunde oder Mitarbeiter)
 class User(UserMixin):
     def __init__(self, id, role, name):
-        self.id = id      # Die ID, z.B. "K-1" oder "M-2"
-        self.role = role  # "kunde" oder "mitarbeiter"
+        self.id = id      
+        self.role = role  
         self.name = name
 
-# Flask ruft diese Funktion bei JEDEM Seitenaufruf auf
-# Sie lädt den User anhand der ID aus der Datenbank nach
 @login_manager.user_loader
 def load_user(user_id):
-    # Fehlerbehebung: Falls die ID ungültig ist (kein Bindestrich), nichts tun
+    # 1. Sicherheitscheck: Ist die ID gültig?
     if not user_id or '-' not in user_id:
         return None
 
-    parts = user_id.split('-') # Teilt "K-1" in ["K", "1"]
-    
-    # Sicherstellen, dass wir wirklich 2 Teile haben
-    if len(parts) < 2:
-        return None
+    parts = user_id.split('-')
+    if len(parts) < 2: return None
 
     typ = parts[0]
     db_id = parts[1]
     
+    # 2. Daten laden (mit Fehlerbehandlung für Spaltennamen)
     if typ == 'K': # Kunde
-        # Wir versuchen es erst mit Kunden_id, falls das fehlschlägt, ist die Tabelle evtl. anders benannt
-        # Da wir hier SQL schreiben müssen, nutzen wir Kunden_id als Standard
-        # Falls du hier Fehler bekommst, müssen wir prüfen ob die Spalte 'id' heißt
-        res = db_read("SELECT * FROM Kunden WHERE Kunden_id = %s", (db_id,))
-        # Fallback falls die Query leer ist, könnte man hier eine zweite Query mit 'id' versuchen, 
-        # aber meistens liegt der Fehler beim Login (unten).
-        if res: return User(user_id, 'kunde', res[0]['Kunden_Benutzername'])
+        try:
+            # Versuch 1: Heißt die Spalte 'Kunden_id'?
+            res = db_read("SELECT * FROM Kunden WHERE Kunden_id = %s", (db_id,))
+        except Exception:
+            # Versuch 2: Fallback, falls die Spalte einfach 'id' heißt
+            try:
+                res = db_read("SELECT * FROM Kunden WHERE id = %s", (db_id,))
+            except:
+                return None # Wenn beides nicht geht, geben wir auf
+
+        if res: 
+            # Auch beim Namen sind wir vorsichtig:
+            name = res[0].get('Kunden_Benutzername') or res[0].get('Benutzername') or "Kunde"
+            return User(user_id, 'kunde', name)
         
     elif typ == 'M': # Mitarbeiter
-        res = db_read("SELECT * FROM MitarbeiterInnen WHERE MitarbeiterInnen_id = %s", (db_id,))
-        if res: return User(user_id, 'mitarbeiter', res[0]['MitarbeiterInnen_Name'])
+        try:
+            # Versuch 1: MitarbeiterInnen_id
+            res = db_read("SELECT * FROM MitarbeiterInnen WHERE MitarbeiterInnen_id = %s", (db_id,))
+        except Exception:
+            # Versuch 2: id
+            try:
+                res = db_read("SELECT * FROM MitarbeiterInnen WHERE id = %s", (db_id,))
+            except:
+                return None
+
+        if res: 
+            name = res[0].get('MitarbeiterInnen_Name') or res[0].get('Name') or "Mitarbeiter"
+            return User(user_id, 'mitarbeiter', name)
         
     return None
 
-# Diese Funktion wird NUR beim Klick auf "Login" aufgerufen
-# Sie prüft Benutzername und Passwort
 def authenticate(username, password, role):
     if role == 'kunde':
-        # Prüfen ob Name UND Passwort stimmen
-        res = db_read("SELECT * FROM Kunden WHERE Kunden_Benutzername = %s AND Kunden_password = %s", (username, password))
+        try:
+            res = db_read("SELECT * FROM Kunden WHERE Kunden_Benutzername = %s AND Kunden_password = %s", (username, password))
+        except:
+            return None # Wahrscheinlich Spaltennamen falsch
+
         if res: 
-            # Robuste ID-Suche: Falls 'Kunden_id' fehlt, probieren wir 'id' oder 'kunden_id'
-            user_row = res[0]
-            k_id = user_row.get('Kunden_id') or user_row.get('id') or user_row.get('kunden_id')
-            
-            return User(f"K-{k_id}", 'kunde', user_row['Kunden_Benutzername'])
+            # ID sicher auslesen (egal ob 'Kunden_id' oder 'id')
+            row = res[0]
+            k_id = row.get('Kunden_id') or row.get('id')
+            return User(f"K-{k_id}", 'kunde', row.get('Kunden_Benutzername'))
     
     elif role == 'mitarbeiter':
-        # Nur Name prüfen (Mitarbeiter haben kein Passwort in deiner Tabelle)
-        # WICHTIG: Hier muss der Spaltenname stimmen!
-        res = db_read("SELECT * FROM MitarbeiterInnen WHERE MitarbeiterInnen_Name = %s", (username,))
+        try:
+            res = db_read("SELECT * FROM MitarbeiterInnen WHERE MitarbeiterInnen_Name = %s", (username,))
+        except:
+            return None
+
         if res: 
-            user_row = res[0]
-            # Auch hier robust sein
-            m_id = user_row.get('MitarbeiterInnen_id') or user_row.get('id') or user_row.get('mitarbeiterinnen_id')
-            
-            return User(f"M-{m_id}", 'mitarbeiter', user_row['MitarbeiterInnen_Name'])
+            row = res[0]
+            m_id = row.get('MitarbeiterInnen_id') or row.get('id')
+            return User(f"M-{m_id}", 'mitarbeiter', row.get('MitarbeiterInnen_Name'))
             
     return None
 
-# Diese Funktion wird beim Registrieren aufgerufen
 def register_user(username, password, name, adresse):
-    # Gibt es den Namen schon?
-    exists = db_read("SELECT * FROM Kunden WHERE Kunden_Benutzername = %s", (username,))
-    if exists: return False
-    
-    # Speichern
-    db_write(
-        "INSERT INTO Kunden (Kunden_Benutzername, Kunden_password, Kunden_Name, Kunden_Vorname, Kunden_Adresse) VALUES (%s, %s, %s, 'Neu', %s)", 
-        (username, password, name, adresse)
-    )
-    return True
+    try:
+        exists = db_read("SELECT * FROM Kunden WHERE Kunden_Benutzername = %s", (username,))
+        if exists: return False
+        
+        db_write(
+            "INSERT INTO Kunden (Kunden_Benutzername, Kunden_password, Kunden_Name, Kunden_Vorname, Kunden_Adresse) VALUES (%s, %s, %s, 'Neu', %s)", 
+            (username, password, name, adresse)
+        )
+        return True
+    except:
+        return False
