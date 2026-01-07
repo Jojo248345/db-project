@@ -129,7 +129,16 @@ class User(UserMixin):
 # Sie lädt den User anhand der ID aus der Datenbank nach
 @login_manager.user_loader
 def load_user(user_id):
+    # Fehlerbehebung: Falls die ID ungültig ist (kein Bindestrich), nichts tun
+    if not user_id or '-' not in user_id:
+        return None
+
     parts = user_id.split('-') # Teilt "K-1" in ["K", "1"]
+    
+    # Sicherstellen, dass wir wirklich 2 Teile haben
+    if len(parts) < 2:
+        return None
+
     typ = parts[0]
     db_id = parts[1]
     
