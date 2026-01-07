@@ -108,7 +108,7 @@ def logout():
 
 
 
-@app.route("/produkt-neu", methods=["GET", "POST"])
+'''@app.route("/produkt-neu", methods=["GET", "POST"])
 def produkt_neu():
 
     # GET → Formular anzeigen
@@ -181,6 +181,110 @@ def bezahlen():
     )
 
     session.pop("warenkorb", None)
-    return "✅ Bestellung abgeschlossen!"
+    return "✅ Bestellung abgeschlossen!" '''
+
+    @app.route("/")
+def index():
+    return render_template("index.html")
+
+# --- LOGIN & REGISTER (Zeigt 'templates/auth.html') ---
+
+
+
+
+# --- MITARBEITER (Zeigt 'produkt_neu.html' & 'drohne_neu.html') ---
+
+@app.route("/produkt-neu", methods=["GET", "POST"])
+@login_required
+def produkt_neu():
+    if current_user.role != 'mitarbeiter': return "Verboten!"
+
+    if request.method == "GET":
+        return render_template("produkt_neu.html")
+
+    # 1. Rezept speichern
+    rezept_id = db_write(
+        "INSERT INTO Rezept (Mehl_g, Zucker_g, Schokolade_g, Wasser_ml, Milch_ml, Butter_g, Eier_stk, Salz_g) VALUES (%s, %s, %s, 0, 0, 0, 0, 0)",
+        (request.form["mehl"], request.form["zucker"], request.form["schoko"])
+    )
+    # 2. Produkt speichern
+    db_write(
+        "INSERT INTO Produkte (Produkt_Name, Produkt_Preis_CHF, Rezept_id) VALUES (%s, %s, %s)",
+        (request.form["name"], request.form["preis"], rezept_id)
+    )
+    return "✅ Produkt gespeichert! <a href='/'>Zurück</a>"
+
+@app.route("/drohne-neu", methods=["GET", "POST"])
+@login_required
+def drohne_neu():
+    if current_user.role != 'mitarbeiter': return "Verboten!"
+    
+    if request.method == "POST":
+        db_write(
+            "INSERT INTO Drohnen (Drohnen_Name, Drohnen_Geschwindigkeit_kmh, Drohnen_Preis_CHF, Drohnen_beschaeftigt) VALUES (%s, %s, %s, 0)",
+            (request.form["name"], request.form["speed"], request.form["preis"])
+        )
+        return "✅ Drohne gespeichert! <a href='/'>Zurück</a>"
+    
+    return render_template("drohne_neu.html")
+
+@app.route("/produkt-loeschen/<int:id>")
+@login_required
+def produkt_loeschen(id):
+    if current_user.role != 'mitarbeiter': return "Verboten!"
+    db_write("DELETE FROM Produkte WHERE Produkt_id = %s", (id,))
+    return redirect("/produkte")
+
+
+# --- KUNDEN (Zeigt 'produkte.html', 'drohne.html', 'bezahlen.html') ---
+
+@app.route("/produkte")
+def produkte():
+    daten = db_read("SELECT * FROM Produkte")
+    return render_template("produkte.html", produkte=daten)
+
+@app.route("/warenkorb", methods=["POST"])
+@login_required
+def warenkorb_add():
+    # Speichert Produkt temporär
+    session["warenkorb_id"] = request.form["produkt_id"]
+    session["warenkorb_name"] = request.form["produkt_name"]
+    session["warenkorb_preis"] = float(request.form["produkt_preis"])
+    return redirect("/drohne")
+
+@app.route("/drohne", methods=["GET", "POST"])
+@login_required
+def drohne():
+    if request.method == "GET":
+        # Nur freie Drohnen laden
+        daten = db_read("SELECT * FROM Drohnen WHERE Drohnen_beschaeftigt = 0")
+        return render_template("drohne.html", drohnen=daten)
+
+    # Speichert Drohnen-Wahl
+    session["drohne_id"] = request.form["drohnen_id"]
+    session["drohne_preis"] = float(request.form["drohne_preis"])
+    return redirect("/bezahlen")
+
+@app.route("/bezahlen", methods=["GET", "POST"])
+@login_required
+def bezahlen():
+    total = session.get("warenkorb_preis", 0) + session.get("drohne_preis", 0)
+
+    if request.method == "GET":
+        return render_template("bezahlen.html", total=total)
+
+    # Bestellung abschicken
+    kunden_id = current_user.id.split("-")[1]
+    db_write("INSERT INTO Bestellung (Kunden_id, Drohnen_id, Bestell_Datum, Gesamtpreis_CHF, Status) VALUES (%s, %s, NOW(), %s, 'Bezahlt')",
+             (kunden_id, session["drohne_id"], total))
+    
+    # Drohne auf 'beschäftigt' setzen
+    db_write("UPDATE Drohnen SET Drohnen_beschaeftigt = 1 WHERE Drohnen_id = %s", (session["drohne_id"],))
+    
+    session.pop("warenkorb_id", None) # Warenkorb leeren
+    return "✅ Bestellt! <a href='/'>Home</a>"
+
+if __name__ == "__main__":
+    app.run()
 
 

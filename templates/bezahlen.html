@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="text-center card p-5">
+    <h2>Bezahlen</h2>
+    <p class="lead">Deine Zusammenfassung:</p>
+    
+    <ul class="list-group mb-4">
+        <li class="list-group-item">Produkt: {{ session.get('warenkorb_name') }}</li>
+        <li class="list-group-item">Produkt Preis: {{ session.get('warenkorb_preis') }} CHF</li>
+        <li class="list-group-item">Lieferung: {{ session.get('drohne_preis') }} CHF</li>
+        <li class="list-group-item active"><strong>Gesamt: {{ total }} CHF</strong></li>
+    </ul>
+
+    <form method="POST">
+        <!-- Einfaches Formular zur Simulation -->
+        <input type="text" placeholder="Kreditkarten Nummer (Simuliert)" class="form-control mb-3">
+        <button type="submit" class="btn btn-success btn-lg">Zahlung bestätigen & Bestellen</button>
+    </form>
+</div>
+{% endblock %}

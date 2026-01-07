@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="text-center mt-5">
+    <h1>🥐 Willkommen bei der Drohnen-Bäckerei</h1>
+    <p class="lead">Frische Brötchen direkt aus der Luft!</p>
+    
+    {% if current_user.is_authenticated %}
+        {% if current_user.role == 'mitarbeiter' %}
+            <a href="/produkt-neu" class="btn btn-success btn-lg m-2">Neues Produkt anlegen</a>
+            <a href="/drohne-neu" class="btn btn-warning btn-lg m-2">Neue Drohne anlegen</a>
+            <a href="/produkte" class="btn btn-primary btn-lg m-2">Produkte ansehen/löschen</a>
+        {% else %}
+            <a href="/produkte" class="btn btn-primary btn-lg">Jetzt bestellen</a>
+        {% endif %}
+    {% else %}
+        <a href="/login" class="btn btn-primary btn-lg">Einloggen zum Bestellen</a>
+    {% endif %}
+</div>
+{% endblock %}

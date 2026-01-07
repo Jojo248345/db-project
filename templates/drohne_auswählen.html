@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Wähle deine Liefer-Drohne</h2>
+<form method="POST">
+    <div class="row">
+        {% for d in drohnen %}
+        <div class="col-md-4">
+            <div class="card p-3 mb-3 text-center">
+                <h5>{{ d.Drohnen_Name }}</h5>
+                <p>Speed: {{ d.Drohnen_Geschwindigkeit_kmh }} km/h</p>
+                <p class="fw-bold text-success">+ {{ d.Drohnen_Preis_CHF }} CHF</p>
+                
+                <input type="radio" name="drohnen_id" value="{{ d.Drohnen_id }}" required checked>
+                <input type="hidden" name="drohne_preis" value="{{ d.Drohnen_Preis_CHF }}">
+                <label>Auswählen</label>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    <button type="submit" class="btn btn-primary btn-lg w-100">Weiter zum Bezahlen</button>
+</form>
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Unsere Produkte</h2>
+<div class="row">
+    {% for p in produkte %}
+    <div class="col-md-4">
+        <div class="card p-3 mb-3">
+            <h4>{{ p.Produkt_Name }}</h4>
+            <p class="fs-4">{{ p.Produkt_Preis_CHF }} CHF</p>
+            
+            {% if current_user.role == 'mitarbeiter' %}
+                <a href="/produkt-loeschen/{{ p.Produkt_id }}" class="btn btn-danger">Löschen</a>
+            {% else %}
+                <form action="/warenkorb" method="POST">
+                    <input type="hidden" name="produkt_id" value="{{ p.Produkt_id }}">
+                    <input type="hidden" name="produkt_name" value="{{ p.Produkt_Name }}">
+                    <input type="hidden" name="produkt_preis" value="{{ p.Produkt_Preis_CHF }}">
+                    <button type="submit" class="btn btn-success w-100">In den Warenkorb & Drohne wählen</button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
