@@ -144,7 +144,7 @@ def produkte():
 
 
 # 2️⃣ Produkt in Warenkorb
-@app.post("/warenkorb/add")
+@app.post("/warenkorb")
 
 def warenkorb_add():
     produkt_id = request.form["produkt_id"]
