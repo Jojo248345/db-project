@@ -127,7 +127,7 @@ def produkt_neu():
     )
 
     return "✅ Produkt wurde erfolgreich gespeichert!"
-return redirect('/produkt-neu')
+
 
 
 
