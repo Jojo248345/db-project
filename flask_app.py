@@ -209,3 +209,7 @@ def bezahlen():
     session.pop("warenkorb", None)
     return "✅ Bestellung abgeschlossen!"
 
+@app.route("/")
+@login_required
+def startseite():
+    return render_template("start.html")
