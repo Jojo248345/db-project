@@ -100,7 +100,7 @@ def register():
         footer_link_label="Einloggen"
     )
 
-@app.route("/logout")
+'''@app.route("/logout")
 @login_required
 def logout():
     logout_user()
@@ -126,5 +126,92 @@ def produkt_neu():
         (name, preis, rezept_id)
     )
 
-    return "✅ Produkt wurde erfolgreich gespeichert!"
+    return "✅ Produkt wurde erfolgreich gespeichert!" '''
+@app.route("/produkt-neu", methods=["GET", "POST"])
+@login_required
+def produkt_neu():
+    success = False
+
+    # Wenn Formular abgeschickt wurde
+    if request.method == "POST":
+        name = request.form["name"]
+        preis = request.form["preis"]
+        rezept_id = request.form["rezept_id"]
+
+        db_write(
+            "INSERT INTO Produkte (Produkt_Name, Produkt_Preis_CHF, Rezept_id) VALUES (%s, %s, %s)",
+            (name, preis, rezept_id)
+        )
+
+        success = True  # <-- Häkchen anzeigen
+
+    # Rezepte für Dropdown
+    rezepte = db_read("SELECT Rezept_id FROM Rezept")
+
+    # Gespeicherte Produkte für Tabelle
+    produkte = db_read("""
+        SELECT p.Produkt_Name, p.Produkt_Preis_CHF, r.Rezept_id
+        FROM Produkte p
+        LEFT JOIN Rezept r ON p.Rezept_id = r.Rezept_id
+        ORDER BY p.Produkt_id DESC
+    """)
+
+    return render_template(
+        "produkt_neu.html",
+        rezepte=rezepte,
+        produkte=produkte,
+        success=success
+    )
+
+
+
+
+# 1️⃣ Produkte anzeigen
+@app.route("/produkte")
+@login_required
+def produkte():
+    produkte = db_read("SELECT * FROM Produkte")
+    return render_template("produkte.html", produkte=produkte)
+
+
+# 2️⃣ Produkt in Warenkorb
+@app.post("/warenkorb/add")
+@login_required
+def warenkorb_add():
+    produkt_id = request.form["produkt_id"]
+
+    if "warenkorb" not in session:
+        session["warenkorb"] = []
+
+    session["warenkorb"].append(int(produkt_id))
+    return redirect("/produkte")
+
+
+# 3️⃣ Drohne auswählen
+@app.route("/drohne", methods=["GET", "POST"])
+@login_required
+def drohne():
+    if request.method == "GET":
+        drohnen = db_read("SELECT * FROM Drohnen WHERE Drohnen_beschaeftigt = 0")
+        return render_template("drohne.html", drohnen=drohnen)
+
+    session["drohnen_id"] = request.form["drohnen_id"]
+    return redirect("/bezahlen")
+
+
+# 4️⃣ Bezahlen (SIMULIERT)
+@app.route("/bezahlen", methods=["GET", "POST"])
+@login_required
+def bezahlen():
+    if request.method == "GET":
+        return render_template("bezahlen.html")
+
+    # Bestellung speichern (sehr einfach)
+    db_write(
+        "INSERT INTO Bestellung (Kunden_id, Drohnen_id, Gesamtpreis_CHF) VALUES (%s, %s, %s)",
+        (current_user.id, session["drohnen_id"], 20.00)
+    )
+
+    session.pop("warenkorb", None)
+    return "✅ Bestellung abgeschlossen!"
 
