@@ -187,11 +187,9 @@ def bezahlen():
 def index():
     return render_template("index.html")
 
-# --- LOGIN & REGISTER (Zeigt 'templates/auth.html') ---
 
-@app.route("/")
-def index():
-    return render_template("index.html")
+
+
 
 # --- LOGIN & REGISTER ---
 
