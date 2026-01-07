@@ -48,7 +48,7 @@ CREATE TABLE Rezept (
     Bestell_Datum DATETIME,
     Gesamtpreis_CHF FLOAT,
     Status VARCHAR(20),
-    FOREIGN KEY (Kunden_id) REFERENCES Kunden(Kunden_id),
+    FOREIGN KEY (Kunden_id) REFERENCES Kunden(id),
     FOREIGN KEY (Drohnen_id) REFERENCES Drohnen(Drohnen_id)
 );
 
@@ -56,7 +56,3 @@ CREATE TABLE Rezept (
 (Mehl_g, Wasser_ml, Butter_g, Milch_ml, Eier_stk, Zucker_g, Salz_g, Schokolade_g)
 VALUES (200, 100, 50, 50, 2, 30, 5, 20);
 
- "CREATE TABLE Website (
-    Website_URL INT AUTO_INCREMENT PRIMARY KEY,
-    Website_Werbung VARCHAR(200)
- );"
