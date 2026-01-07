@@ -108,7 +108,7 @@ def logout():
 
 
 
-'''@app.route("/produkt-neu", methods=["GET", "POST"])
+@app.route("/produkt-neu", methods=["GET", "POST"])
 def produkt_neu():
 
     # GET → Formular anzeigen
@@ -126,33 +126,9 @@ def produkt_neu():
         (name, preis, rezept_id)
     )
 
-    return "✅ Produkt wurde erfolgreich gespeichert!" '''
+    return "✅ Produkt wurde erfolgreich gespeichert!"
 
-@app.route("/produkt-neu", methods=["GET", "POST"])
-@login_required
-def produkt_neu():
-    success = False
 
-    if request.method == "POST":
-        db_write(
-            "INSERT INTO Produkte (Produkt_Name, Produkt_Preis_CHF, Rezept_id) VALUES (%s, %s, %s)",
-            (
-                request.form["name"],
-                request.form["preis"],
-                request.form["rezept_id"]
-            )
-        )
-        success = True
-
-    rezepte = db_read("SELECT Rezept_id FROM Rezept")
-    produkte = db_read("SELECT Produkt_Name, Produkt_Preis_CHF, Rezept_id FROM Produkte")
-
-    return render_template(
-        "produkt_neu.html",
-        success=success,
-        rezepte=rezepte,
-        produkte=produkte
-    )
 
 
 
