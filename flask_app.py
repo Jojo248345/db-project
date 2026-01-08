@@ -411,7 +411,7 @@ def produkt_loeschen(id):
 
 # --- DROHNEN VERWALTUNG (NEU) ---
 
-@app.route("/drohne-neu", methods=["GET", "POST"])
+'''@app.route("/drohne-neu", methods=["GET", "POST"])
 @login_required
 def drohne_neu():
     if current_user.role != 'mitarbeiter': return "Verboten!"
@@ -491,7 +491,7 @@ def bezahlen():
     return "✅ Bestellt! <a href='/'>Home</a>"
 
 if __name__ == "__main__":
-    app.run()
+    app.run()'''
 
 # GANZ OBEN BEI DEN IMPORTS HINZUFÜGEN:
 import threading
