@@ -8,6 +8,8 @@ from db import db_read, db_write
 from auth import login_manager, authenticate, register_user
 from flask_login import login_user, logout_user, login_required, current_user
 import logging
+import threading
+import time
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -473,29 +475,10 @@ def drohne():
     session["drohne_preis"] = float(request.form["drohne_preis"])
     return redirect("/bezahlen")
 
-'''@app.route("/bezahlen", methods=["GET", "POST"])
-@login_required
-def bezahlen():
-    total = session.get("warenkorb_preis", 0) + session.get("drohne_preis", 0)
 
-    if request.method == "GET":
-        return render_template("bezahlen.html", total=total)
 
-    kunden_id = current_user.id.split("-")[1]
-    db_write("INSERT INTO Bestellung (Kunden_id, Drohnen_id, Bestell_Datum, Gesamtpreis_CHF, Status) VALUES (%s, %s, NOW(), %s, 'Bezahlt')",
-             (kunden_id, session["drohne_id"], total))
-    
-    db_write("UPDATE Drohnen SET Drohnen_beschaeftigt = 1 WHERE Drohnen_id = %s", (session["drohne_id"],))
-    
-    session.pop("warenkorb_id", None)
-    return "✅ Bestellt! <a href='/'>Home</a>"
 
-if __name__ == "__main__":
-    app.run()'''
 
-# GANZ OBEN BEI DEN IMPORTS HINZUFÜGEN:
-import threading
-import time
 
 # ... dein bestehender Code (Login, Register, etc.) ...
 
