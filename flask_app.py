@@ -492,3 +492,58 @@ def bezahlen():
 
 if __name__ == "__main__":
     app.run()
+
+# GANZ OBEN BEI DEN IMPORTS HINZUFÜGEN:
+import threading
+import time
+
+# ... dein bestehender Code (Login, Register, etc.) ...
+
+# --- HILFSFUNKTION FÜR DEN TIMER ---
+def drohne_automatisch_freigeben(drohnen_id):
+    """Wartet 10 Sekunden und setzt die Drohne dann wieder auf frei."""
+    time.sleep(10) # 10 Sekunden warten
+    
+    # Hier nutzen wir db_write, um den Status zurückzusetzen
+    # Hinweis: Da dies in einem separaten Thread läuft, muss db_write
+    # eine eigene Datenbankverbindung aufbauen (was es in den meisten
+    # Vorlagen dieser Art tut).
+    print(f"⏳ Drohne {drohnen_id} wird freigegeben...")
+    db_write("UPDATE Drohnen SET Drohnen_beschaeftigt = 0 WHERE Drohnen_id = %s", (drohnen_id,))
+    print(f"✅ Drohne {drohnen_id} ist wieder bereit!")
+
+
+# ... dein Code für Mitarbeiter, Produkte löschen etc. ...
+
+
+# --- DIE ANGEPASSTE BEZAHLEN ROUTE ---
+
+@app.route("/bezahlen", methods=["GET", "POST"])
+@login_required
+def bezahlen():
+    total = session.get("warenkorb_preis", 0) + session.get("drohne_preis", 0)
+
+    if request.method == "GET":
+        return render_template("bezahlen.html", total=total)
+
+    # 1. Bestellung speichern
+    kunden_id = current_user.id.split("-")[1]
+    drohnen_id = session["drohne_id"]
+
+    db_write("INSERT INTO Bestellung (Kunden_id, Drohnen_id, Bestell_Datum, Gesamtpreis_CHF, Status) VALUES (%s, %s, NOW(), %s, 'Bezahlt')",
+             (kunden_id, drohnen_id, total))
+    
+    # 2. Drohne als beschäftigt markieren (sofort)
+    db_write("UPDATE Drohnen SET Drohnen_beschaeftigt = 1 WHERE Drohnen_id = %s", (drohnen_id,))
+    
+    # 3. NEU: Den Hintergrund-Thread starten, der sie nach 10 Sek wieder freigibt
+    # Wir übergeben die drohnen_id an die Funktion
+    thread = threading.Thread(target=drohne_automatisch_freigeben, args=(drohnen_id,))
+    thread.start()
+    
+    # Session aufräumen
+    session.pop("warenkorb_id", None)
+    
+    return "✅ Bestellt! Die Drohne liefert jetzt aus und kommt gleich zurück. <a href='/'>Home</a>"
+
+# ... restlicher Code (if __name__ == "__main__" etc) ...
