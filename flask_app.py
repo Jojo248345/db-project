@@ -411,7 +411,7 @@ def produkt_loeschen(id):
 
 # --- DROHNEN VERWALTUNG (NEU) ---
 
-'''@app.route("/drohne-neu", methods=["GET", "POST"])
+@app.route("/drohne-neu", methods=["GET", "POST"])
 @login_required
 def drohne_neu():
     if current_user.role != 'mitarbeiter': return "Verboten!"
@@ -473,7 +473,7 @@ def drohne():
     session["drohne_preis"] = float(request.form["drohne_preis"])
     return redirect("/bezahlen")
 
-@app.route("/bezahlen", methods=["GET", "POST"])
+'''@app.route("/bezahlen", methods=["GET", "POST"])
 @login_required
 def bezahlen():
     total = session.get("warenkorb_preis", 0) + session.get("drohne_preis", 0)
