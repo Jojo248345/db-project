@@ -60,7 +60,7 @@ class User(UserMixin):
 @login_manager.user_loader
 def load_user(user_id):
     logger.debug("load_user() aufgerufen mit user_id=%s", user_id)
-    try:
+    try:drohne
         user = User.get_by_id(int(user_id))
     except ValueError:
         logger.error("load_user(): user_id=%r ist keine int", user_id)

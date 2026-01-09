@@ -485,7 +485,7 @@ def drohne():
 # --- HILFSFUNKTION FÜR DEN TIMER ---
 def drohne_automatisch_freigeben(drohnen_id):
     """Wartet 10 Sekunden und setzt die Drohne dann wieder auf frei."""
-    time.sleep(10) # 10 Sekunden warten
+    time.sleep(60) # 10 Sekunden warten
     
     # Hier nutzen wir db_write, um den Status zurückzusetzen
     # Hinweis: Da dies in einem separaten Thread läuft, muss db_write
