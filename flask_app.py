@@ -220,7 +220,7 @@ def bezahlen():
     
     return "✅ Bestellt! Die Drohne liefert jetzt aus und kommt gleich zurück. <a href='/'>Home</a>"'''
 
-    @app.route("/")
+@app.route("/")
 def index():
     return render_template("index.html")
 
