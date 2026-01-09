@@ -391,7 +391,7 @@ def bezahlen():
     
     return "✅ Bestellt! Die Drohne liefert jetzt aus und kommt gleich zurück. <a href='/'>Home</a>"'''
 
-    @app.route("/bezahlen", methods=["GET", "POST"])
+@app.route("/bezahlen", methods=["GET", "POST"])
 @login_required
 def bezahlen():
     total = session.get("warenkorb_preis", 0) + session.get("drohne_preis", 0)
