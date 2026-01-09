@@ -48,7 +48,7 @@ def webhook():
         return 'Updated PythonAnywhere successfully', 200
     return 'Unathorized', 401
 
-@app.route("/")
+'''@app.route("/")
 def index():
     return render_template("index.html")
 
@@ -255,8 +255,16 @@ def bezahlen():
 
 # ... restlicher Code (if __name__ == "__main__" etc) ...
 
+ 
 
-'''@app.route("/")
+
+
+
+
+
+
+
+@app.route("/")
 def index():
     return render_template("index.html")
 
@@ -411,3 +419,186 @@ def bezahlen():
     session.pop("warenkorb_id", None)
     
     return "✅ Bestellt! Die Drohne liefert jetzt aus und kommt gleich zurück. <a href='/'>Home</a>"'''
+
+@app.route("/")
+def index():
+    return render_template("index.html")
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    error = None
+    if request.method == "POST":
+        user = authenticate(
+            request.form["username"], 
+            request.form["password"], 
+            request.form.get("role", "kunde")
+        )
+        if user:
+            login_user(user)
+            return redirect(url_for("index"))
+        error = "Falscher Name oder Passwort!"
+
+    return render_template("auth.html", title="Login", action="/login", button_label="Anmelden", error=error, is_register=False)
+
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    error = None
+    if request.method == "POST":
+        ok = register_user(
+            request.form["username"], 
+            request.form["password"], 
+            request.form["name"], 
+            request.form["adresse"]
+        )
+        if ok:
+            return redirect(url_for("login"))
+        error = "Name schon vergeben!"
+
+    return render_template("auth.html", title="Registrieren", action="/register", button_label="Erstellen", error=error, is_register=True)
+
+@app.route("/logout")
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for("index"))
+
+
+# --- MITARBEITER ---
+
+@app.route("/produkt-neu", methods=["GET", "POST"])
+@login_required
+def produkt_neu():
+    if current_user.role != 'mitarbeiter': return "Verboten!"
+
+    if request.method == "GET":
+        return render_template("produkt_neu.html")
+
+    mehl = request.form.get("mehl") or 0
+    wasser = request.form.get("wasser") or 0
+    butter = request.form.get("butter") or 0
+    milch = request.form.get("milch") or 0
+    eier = request.form.get("eier") or 0
+    zucker = request.form.get("zucker") or 0
+    salz = request.form.get("salz") or 0
+    schoko = request.form.get("schoko") or 0
+
+    # 1. Rezept speichern
+    sql_rezept = """
+        INSERT INTO Rezept (Mehl_g, Wasser_ml, Butter_g, Milch_ml, Eier_stk, Zucker_g, Salz_g, Schokolade_g) 
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+    """
+    rezept_id = db_write(sql_rezept, (mehl, wasser, butter, milch, eier, zucker, salz, schoko))
+
+    # 2. Produkt speichern
+    db_write(
+        "INSERT INTO Produkte (Produkt_Name, Produkt_Preis_CHF, Rezept_id) VALUES (%s, %s, %s)",
+        (request.form["name"], request.form["preis"], rezept_id)
+    )
+    return "✅ Produkt erfolgreich mit Rezept gespeichert! <a href='/'>Zurück</a>"
+
+@app.route("/produkt-loeschen/<int:id>")
+@login_required
+def produkt_loeschen(id):
+    if current_user.role != 'mitarbeiter': return "Verboten!"
+    db_write("DELETE FROM Produkte WHERE Produkt_id = %s", (id,))
+    return redirect("/produkte")
+
+
+# --- DROHNEN VERWALTUNG (NEU) ---
+
+@app.route("/drohne-neu", methods=["GET", "POST"])
+@login_required
+def drohne_neu():
+    if current_user.role != 'mitarbeiter': return "Verboten!"
+    
+    if request.method == "POST":
+        db_write(
+            "INSERT INTO Drohnen (Drohnen_Name, Drohnen_Geschwindigkeit_kmh, Drohnen_Preis_CHF, Drohnen_beschaeftigt) VALUES (%s, %s, %s, 0)",
+            (request.form["name"], request.form["speed"], request.form["preis"])
+        )
+        return redirect(url_for('drohne_neu'))
+    
+    drohnen_liste = db_read("SELECT * FROM Drohnen")
+    return render_template("drohne_neu.html", drohnen=drohnen_liste)
+
+# --- HIER WAR DER FEHLER ---
+@app.route("/drohne-loeschen/<int:id>")
+@login_required
+def drohne_loeschen(id):
+    if current_user.role != 'mitarbeiter': return "Verboten!"
+    
+    # 1. FIX: Erst die alten Bestellungen dieser Drohne löschen
+    db_write("DELETE FROM Bestellung WHERE Drohnen_id = %s", (id,))
+    
+    # 2. Dann die Drohne löschen (jetzt erlaubt die DB das)
+    db_write("DELETE FROM Drohnen WHERE Drohnen_id = %s", (id,))
+    
+    return redirect(url_for('drohne_neu'))
+
+@app.route("/drohne-reset/<int:id>")
+@login_required
+def drohne_reset(id):
+    if current_user.role != 'mitarbeiter': return "Verboten!"
+    db_write("UPDATE Drohnen SET Drohnen_beschaeftigt = 0 WHERE Drohnen_id = %s", (id,))
+    return redirect(url_for('drohne_neu'))
+
+
+# --- KUNDEN ---
+
+@app.route("/produkte")
+def produkte():
+    daten = db_read("SELECT * FROM Produkte")
+    return render_template("produkte.html", produkte=daten)
+
+@app.route("/warenkorb", methods=["POST"])
+@login_required
+def warenkorb_add():
+    session["warenkorb_id"] = request.form["produkt_id"]
+    session["warenkorb_name"] = request.form["produkt_name"]
+    session["warenkorb_preis"] = float(request.form["produkt_preis"])
+    return redirect("/drohne")
+
+@app.route("/drohne", methods=["GET", "POST"])
+@login_required
+def drohne():
+    if request.method == "GET":
+        daten = db_read("SELECT * FROM Drohnen WHERE Drohnen_beschaeftigt = 0")
+        return render_template("drohne.html", drohnen=daten)
+
+    session["drohne_id"] = request.form["drohnen_id"]
+    session["drohne_preis"] = float(request.form["drohne_preis"])
+    return redirect("/bezahlen")
+
+
+# --- TIMER HILFSFUNKTION ---
+def drohne_automatisch_freigeben(drohnen_id):
+    time.sleep(60) 
+    print(f"⏳ Drohne {drohnen_id} wird freigegeben...")
+    db_write("UPDATE Drohnen SET Drohnen_beschaeftigt = 0 WHERE Drohnen_id = %s", (drohnen_id,))
+    print(f"✅ Drohne {drohnen_id} ist wieder bereit!")
+
+
+# --- BEZAHLEN ROUTE ---
+
+@app.route("/bezahlen", methods=["GET", "POST"])
+@login_required
+def bezahlen():
+    total = session.get("warenkorb_preis", 0) + session.get("drohne_preis", 0)
+
+    if request.method == "GET":
+        return render_template("bezahlen.html", total=total)
+
+    kunden_id = current_user.id.split("-")[1]
+    drohnen_id = session["drohne_id"]
+
+    db_write("INSERT INTO Bestellung (Kunden_id, Drohnen_id, Bestell_Datum, Gesamtpreis_CHF, Status) VALUES (%s, %s, NOW(), %s, 'Bezahlt')",
+             (kunden_id, drohnen_id, total))
+    
+    db_write("UPDATE Drohnen SET Drohnen_beschaeftigt = 1 WHERE Drohnen_id = %s", (drohnen_id,))
+    
+    thread = threading.Thread(target=drohne_automatisch_freigeben, args=(drohnen_id,))
+    thread.start()
+    
+    session.pop("warenkorb_id", None)
+    
+    return "✅ Bestellt! Die Drohne liefert jetzt aus und kommt gleich zurück. <a href='/'>Home</a>"
