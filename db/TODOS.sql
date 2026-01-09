@@ -57,7 +57,4 @@ CREATE TABLE Rezept (
 VALUES (200, 100, 50, 50, 2, 30, 5, 20);
 INSERT INTO MitarbeiterInnen (MitarbeiterInnen_Name, MitarbeiterInnen_Vorname, MitarbeiterInnen_Aufgabe) 
 VALUES ('Joris', 'Struve','Chef');
-INSERT INTO MitarbeiterInnen (MitarbeiterInnen_Name, MitarbeiterInnen_Vorname, MitarbeiterInnen_Aufgabe)
-VALUES ('Misha', 'Przydatek', 'Auszubildender');
-INSERT INTO MitarbeiterInnen (MitarbeiterInnen_Name, MitarbeiterInnen_Vorname, MitarbeiterInnen_Aufgabe)
-VALUES ('Malik', 'Hänseler', 'Putzkraft');
+
