@@ -364,7 +364,7 @@ def drohne_automatisch_freigeben(drohnen_id, app):
         db_write("UPDATE Drohnen SET Drohnen_beschaeftigt = 0 WHERE Drohnen_id = %s", (drohnen_id,))
         print(f"✅ Drohne {drohnen_id} ist wieder bereit!")
 
-@app.route("/bezahlen", methods=["GET", "POST"])
+'''@app.route("/bezahlen", methods=["GET", "POST"])
 @login_required
 def bezahlen():
     total = session.get("warenkorb_preis", 0) + session.get("drohne_preis", 0)
@@ -384,6 +384,33 @@ def bezahlen():
     
     # FIX: Aktuelle App an den Thread übergeben
     app = current_app._get_current_object()
+    threading.Thread(target=drohne_automatisch_freigeben, args=(drohnen_id, app)).start()
+    
+    # 3. Session aufräumen
+    session.pop("warenkorb_id", None)
+    
+    return "✅ Bestellt! Die Drohne liefert jetzt aus und kommt gleich zurück. <a href='/'>Home</a>"'''
+
+    @app.route("/bezahlen", methods=["GET", "POST"])
+@login_required
+def bezahlen():
+    total = session.get("warenkorb_preis", 0) + session.get("drohne_preis", 0)
+
+    if request.method == "GET":
+        return render_template("bezahlen.html", total=total)
+
+    kunden_id = current_user.id.split("-")[1]
+    drohnen_id = session["drohne_id"]
+
+    # 1. Bestellung speichern
+    db_write("INSERT INTO Bestellung (Kunden_id, Drohnen_id, Bestell_Datum, Gesamtpreis_CHF, Status) VALUES (%s, %s, NOW(), %s, 'Bezahlt')",
+             (kunden_id, drohnen_id, total))
+    
+    # 2. Drohne blockieren & Timer starten
+    db_write("UPDATE Drohnen SET Drohnen_beschaeftigt = 1 WHERE Drohnen_id = %s", (drohnen_id,))
+    
+    # FIX: Einfach die globale Variable 'app' an den Thread übergeben
+    # Das vermeidet den NameError, da 'app' in deiner Datei existieren muss.
     threading.Thread(target=drohne_automatisch_freigeben, args=(drohnen_id, app)).start()
     
     # 3. Session aufräumen
